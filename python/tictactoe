@@ -1,0 +1,97 @@
+import tkinter as tk
+from tkinter import messagebox
+
+class TicTacToe:
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.title("Tic Tac Toe")
+        self.board = [""] * 9
+        self.current_player = "X"
+        self.is_two_player = True
+
+        self.buttons = [tk.Button(self.window, text="", font='Arial 20', width=5, height=2, command=lambda i=i: self.make_move(i)) for i in range(9)]
+
+        for i, button in enumerate(self.buttons):
+            row = i // 3
+            col = i % 3
+            button.grid(row=row, column=col)
+
+        self.restart_button = tk.Button(self.window, text="Restart", command=self.restart_game)
+        self.restart_button.grid(row=3, column=0, columnspan=3)
+
+        self.mode_button = tk.Button(self.window, text="Switch to Player vs. Computer", command=self.switch_mode)
+        self.mode_button.grid(row=4, column=0, columnspan=3)
+
+        self.window.mainloop()
+
+    def make_move(self, position):
+        if not self.board[position] and not self.winner(self.board, "X") and not self.winner(self.board, "O"):
+            self.board[position] = self.current_player
+            self.buttons[position].config(text=self.current_player)
+            
+            if self.winner(self.board, self.current_player):
+                messagebox.showinfo("Winner", f"Player {self.current_player} wins!")
+                self.restart_game()
+                return
+            elif "" not in self.board:
+                messagebox.showinfo("Tie game", "It's a tie!")
+                self.restart_game()
+                return
+            
+            self.current_player = "O" if self.current_player == "X" else "X"
+            
+            if not self.is_two_player and self.current_player == "O":
+                best_move = self.minimax(self.board, "O")[1]
+                self.make_move(best_move)
+
+    def winner(self, board, player):
+        winning_combinations = [(0, 1, 2), (3, 4, 5), (6, 7, 8), (0, 3, 6), (1, 4, 7), (2, 5, 8), (0, 4, 8), (2, 4, 6)]
+        return any(all(board[i] == player for i in combo) for combo in winning_combinations)
+
+    def minimax(self, board, player):
+        if self.winner(board, "X"):
+            return (-10, None)
+        if self.winner(board, "O"):
+            return (10, None)
+        if "" not in board:
+            return (0, None)
+
+        if player == "O":
+            best_score = float('-inf')
+            best_move = None
+            for i in range(9):
+                if not board[i]:
+                    board[i] = "O"
+                    score = self.minimax(board, "X")[0]
+                    board[i] = ""
+                    if score > best_score:
+                        best_score = score
+                        best_move = i
+            return best_score, best_move
+        else:
+            best_score = float('inf')
+            best_move = None
+            for i in range(9):
+                if not board[i]:
+                    board[i] = "X"
+                    score = self.minimax(board, "O")[0]
+                    board[i] = ""
+                    if score < best_score:
+                        best_score = score
+                        best_move = i
+            return best_score, best_move
+
+    def restart_game(self):
+        for i in range(9):
+            self.board[i] = ""
+            self.buttons[i].config(text="")
+        self.current_player = "X"
+
+    def switch_mode(self):
+        self.is_two_player = not self.is_two_player
+        mode_text = "Switch to Player vs. Computer" if self.is_two_player else "Switch to Two-Player Mode"
+        self.mode_button.config(text=mode_text)
+        self.restart_game()
+
+if __name__ == "__main__":
+    TicTacToe()
